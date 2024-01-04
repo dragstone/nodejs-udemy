@@ -6,8 +6,6 @@ const mongoose = require("mongoose");
 
 const errorController = require("./controllers/error");
 
-const { mongoConnect } = require("./util/databse");
-
 const User = require("./models/user");
 
 // const sequelize = require("./util/databse");
@@ -31,10 +29,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
-  User.findById("6593d941449b1d910864c30d")
+  User.findById("65954b52e04409a05f700acf")
     .then((user) => {
       console.log("user", user);
-      req.user = new User(user.name, user.email, user.cart, user._id);
+      req.user = user;
       next();
     })
     .catch((err) => console.log(err));
@@ -45,18 +43,28 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-mongoConnect(() => {
-  app.listen(3000);
-});
+mongoose
+  .connect(
+    "mongodb+srv://Asmiriti:6CGbzUgkTPRPrGXE@cluster0.cfspp.mongodb.net/shop?retryWrites=true&w=majority"
+  )
+  .then((result) => {
+    User.findOne().then((user) => {
+      if (!user) {
+        const user = new User({
+          name: "asmiriti",
+          email: "asmiritik@gmail.com",
+          cart: {
+            items: [],
+          },
+        });
+        user.save();
+      }
+    });
 
-// mongoose
-//   .connect(
-//     "mongodb+srv://Asmiriti:6CGbzUgkTPRPrGXE@cluster0.cfspp.mongodb.net/shop?retryWrites=true&w=majority"
-//   )
-//   .then(result=>{
-//     app.listen(3000);
-//   })
-//   .catch((err) => console.log(err));
+    console.log("connected");
+    app.listen(3000);
+  })
+  .catch((err) => console.log(err));
 
 // Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
 // User.hasMany(Product);
